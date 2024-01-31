@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.PersonMapper">
+
+    <resultMap id="personMapping" type="org.example.domain.Person" autoMapping="true">
+        <id property="id" column="id"/>
+        <result column="name" property="pname"/>
+        <!--        <result column="age" property="age"/>-->
+    </resultMap>
+
+<!--    <select id="selectPerson" resultType="org.example.domain.Person">-->
+<!--        select id, name as pname, age-->
+<!--        from person-->
+<!--        where id = #{abc}-->
+<!--    </select>-->
+    <select id="selectPerson" resultMap="personMapping">
+        select *
+        from person
+        where id = #{abc}
+    </select>
+    <select id="selectPersonByName" resultType="org.example.domain.Person">
+        select *
+        from person
+        where name = #{name}
+    </select>
+<!--    <select id="selectPersonByIdAndName" resultMap="personMapping">-->
+<!--        select *-->
+<!--        from person-->
+<!--        where id = #{id}-->
+<!--          and name = #{name}-->
+<!--    </select>-->
+    <select id="selectPersonByIdAndName" resultMap="personMapping">
+        select *
+        from person
+        where id = #{param1}
+          and name = #{param2}
+    </select>
+
+    <select id="selectPersonByInstance" resultType="org.example.domain.Person">
+        select *
+        from person
+        where id = #{id}
+    </select>
+    <select id="selectPersonByMap" resultType="org.example.domain.Person">
+        select *
+        from person
+        where id = #{id}
+          and name = #{name}
+    </select>
+    <select id="selectPersonByList" resultType="org.example.domain.Person">
+        select *
+        from person
+        where id = #{list[0]}
+          and name = #{list[1]}
+    </select>
+    <select id="selectPersons" resultType="org.example.domain.Person">
+
+    </select>
+
+    <resultMap id="personDetailMap" type="org.example.domain.Person" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="pname" column="name"/>
+        <association property="address" javaType="org.example.domain.Address" autoMapping="true">
+            <!--            <id property="aid" column="aid"/>-->
+        </association>
+    </resultMap>
+
+    <select id="selectPersonByIdWithDetails" resultMap="personDetailMap">
+        select *
+        from person,
+             address
+        where person.id = #{id}
+          and person.id = address.aid
+    </select>
+
+</mapper>

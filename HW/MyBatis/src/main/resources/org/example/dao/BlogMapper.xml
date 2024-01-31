@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.dao.BlogMapper">
+
+    <resultMap id="detailedBlogResultMap" type="org.example.domain.Blog">
+        <id property="id" column="blog_id"/>
+        <result property="title" column="blog_title"/>
+        <!-- 自定义 typeHandler -->
+        <result property="state" column="blog_state" jdbcType="TINYINT" javaType="org.example.utils.State"
+                typeHandler="org.example.utils.StateTypeHandler"/>
+
+        <association property="author" javaType="org.example.domain.Author">
+            <id property="id" column="author_id"/>
+            <result property="username" column="author_username"/>
+            <result property="password" column="author_password"/>
+            <result property="email" column="author_email"/>
+            <result property="bio" column="author_bio"/>
+            <result property="favouriteSection" column="author_favourite_section"/>
+        </association>
+
+        <collection property="posts" ofType="org.example.domain.Post">
+            <id property="id" column="post_id"/>
+            <result property="subject" column="post_subject"/>
+            <result property="createdOn" column="post_created_on"/>
+            <result property="section" column="post_section"/>
+            <result property="draft" column="post_draft"/>
+            <result property="body" column="post_body"/>
+
+            <collection property="comments" ofType="org.example.domain.Comment">
+                <id property="id" column="comment_id"/>
+                <result property="name" column="comment_name"/>
+                <result property="text" column="comment_text"/>
+            </collection>
+
+            <collection property="tags" ofType="org.example.domain.Tag">
+                <id property="id" column="tag_id"/>
+                <result property="name" column="tag_name"/>
+            </collection>
+
+            <!-- 使用 discriminator 来区分不同的博文类型 -->
+            <discriminator javaType="int" column="post_draft">
+                <case value="0" resultType="org.example.domain.RegularPost"/>
+                <case value="1" resultType="org.example.domain.DraftPost"/>
+            </discriminator>
+        </collection>
+
+    </resultMap>
+
+    <select id="selectBlogWithDetails" resultMap="detailedBlogResultMap">
+        select B.id                as blog_id,
+               B.title             as blog_title,
+               B.author_id         as blog_author_id,
+               B.state             as blog_state,
+
+               A.id                as author_id,
+               A.username          as author_username,
+               A.password          as author_password,
+               A.email             as author_email,
+               A.bio               as author_bio,
+               A.favourite_section as author_favourite_section,
+
+               P.id                as post_id,
+               P.blog_id           as post_blog_id,
+               P.author_id         as post_author_id,
+               P.created_on        as post_created_on,
+               P.section           as post_section,
+               P.subject           as post_subject,
+               P.draft             as post_draft,
+               P.body              as post_body,
+
+               C.id                as comment_id,
+               C.post_id           as comment_post_id,
+               C.name              as comment_name,
+               C.comment           as comment_text,
+
+               T.id                as tag_id,
+               T.name              as tag_name
+        from Blog B
+                 left outer join Author A on B.author_id = A.id
+                 left outer join Post P on B.id = P.blog_id
+                 left outer join Comment C on P.id = C.post_id
+                 left outer join Post_Tag PT on PT.post_id = P.id
+                 left outer join Tag T on PT.tag_id = T.id
+        where B.id = #{id}
+    </select>
+
+
+    <resultMap id="lazyBlogResultMap" type="org.example.domain.Blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+
+        <!-- 延迟加载 -->
+        <association property="author" column="author_id" javaType="org.example.domain.Author"
+                     select="org.example.dao.AuthorMapper.selectAuthorById" fetchType="lazy">
+            <!-- TODO 这里面的还有用吗 -->
+            <id property="id" column="author_id"/>
+        </association>
+
+        <collection property="posts" column="id" ofType="org.example.domain.Post"
+                    select="org.example.dao.PostMapper.selectPostsByBlogId" fetchType="lazy"/>
+    </resultMap>
+
+    <select id="selectBlog" resultMap="lazyBlogResultMap">
+        SELECT *
+        FROM BLOG
+        WHERE id = #{id}
+    </select>
+
+</mapper>
